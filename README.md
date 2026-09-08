@@ -1,5 +1,6 @@
 # TryHackMe Writeups & Solutions
-![Uploading image.png…]()
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/e3a1d906-70d7-4145-adf8-3de88889e8a0" />
+
 
 Welcome to my TryHackMe repository! This repository serves as a personal archive of my walkthroughs, methodology, scripts, and notes for solved machines and challenges on TryHackMe.
 ---
