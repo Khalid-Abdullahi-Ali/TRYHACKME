@@ -4,7 +4,7 @@
 
 **Category:** Web Enumeration → Crypto (XOR) → Command Injection → Privilege Escalation
 **Tools:** `arp-scan`, `nmap`, `dirb`, CyberChef, `netcat`, `ltrace`
-**Author:** Khalid Abdullahi ([@Khalid-devsec](https://github.com/Khalid-devsec))
+**Author:** Khalid Abdullahi ([@Khalid]([https://github.com/Khalid-Abdullahi-Ali])))
 
 ---
 
